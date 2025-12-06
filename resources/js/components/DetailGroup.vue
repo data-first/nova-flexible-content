@@ -8,7 +8,7 @@
         ><!--
              --><span class="text-80">{{ index + 1 }}</span>
       </span>
-      <span class="font-bold">{{ group.title }}</span>
+      <span class="font-bold">{{ group.descriptor || group.title }}</span>
     </div>
     <component
       v-for="(item, index) in group.fields"

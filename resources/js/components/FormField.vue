@@ -230,6 +230,7 @@ export default {
       collapsed = collapsed || false;
 
       let fields = attributes || JSON.parse(JSON.stringify(layout.fields)),
+        descriptor = layout.descriptor || null,
         group = new Group(
           layout.name,
           layout.title,
@@ -237,6 +238,7 @@ export default {
           this.currentField,
           key,
           collapsed,
+          descriptor,
         );
 
       this.groups[group.key] = group;
