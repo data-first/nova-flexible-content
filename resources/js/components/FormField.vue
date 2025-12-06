@@ -230,7 +230,7 @@ export default {
       collapsed = collapsed || false;
 
       let fields = attributes || JSON.parse(JSON.stringify(layout.fields)),
-        descriptor = layout.descriptor || null,
+        descriptor = (attributes && attributes.descriptor) ? attributes.descriptor : (layout.descriptor || null),
         group = new Group(
           layout.name,
           layout.title,

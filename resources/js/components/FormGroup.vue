@@ -37,7 +37,7 @@
 
           <p class="text-80 grow px-4">
             <span class="mr-3 font-semibold">#{{ index + 1 }}</span>
-            {{ group.descriptor || group.title }}
+            {{ currentDescriptor || group.title }}
           </p>
 
           <div class="flex" v-if="!readonly">
@@ -142,6 +142,19 @@ export default {
   },
 
   computed: {
+    currentDescriptor() {
+      // Find the descriptor field and get its current value
+      const descriptorField = this.group.fields.find(f => {
+        const attrParts = f.attribute.split('__');
+        return attrParts[attrParts.length - 1] === 'descriptor';
+      });
+
+      if (descriptorField && descriptorField.value) {
+        return descriptorField.value;
+      }
+
+      return this.group.descriptor || null;
+    },
     titleStyle() {
       let classes = [
         "border-t",
