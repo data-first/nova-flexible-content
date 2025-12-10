@@ -23,7 +23,13 @@ class FieldServiceProvider extends ServiceProvider
         $this->addMiddleware();
 
         Nova::serving(function (ServingNova $event) {
-            Nova::mix('nova-flexible-content', __DIR__.'/../dist/');
+            // Nova 5 uses mix(), Nova 4 uses script()/style()
+            if (method_exists(Nova::class, 'mix')) {
+                Nova::mix('nova-flexible-content', __DIR__.'/../dist/');
+            } else {
+                Nova::script('nova-flexible-content', __DIR__.'/../dist/js/field.js');
+                Nova::style('nova-flexible-content', __DIR__.'/../dist/css/field.css');
+            }
         });
     }
 
