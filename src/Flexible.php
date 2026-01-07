@@ -10,6 +10,7 @@ use Whitecube\NovaFlexibleContent\Http\ScopedRequest;
 use Whitecube\NovaFlexibleContent\Layouts\Collection as LayoutsCollection;
 use Whitecube\NovaFlexibleContent\Layouts\Layout;
 use Whitecube\NovaFlexibleContent\Layouts\LayoutInterface;
+use Whitecube\NovaFlexibleContent\Layouts\LazyLayout;
 use Whitecube\NovaFlexibleContent\Layouts\Preset;
 use Whitecube\NovaFlexibleContent\Value\Resolver;
 use Whitecube\NovaFlexibleContent\Value\ResolverInterface;
@@ -180,6 +181,7 @@ class Flexible extends Field
         $count = count($arguments);
 
         if ($count > 1) {
+            // Inline layout definition - cannot be lazy loaded
             $this->registerLayout(new Layout(...$arguments));
 
             return $this;
@@ -188,7 +190,10 @@ class Flexible extends Field
         $layout = $arguments[0];
 
         if (is_string($layout) && is_a($layout, LayoutInterface::class, true)) {
-            $layout = new $layout();
+            // Use lazy loading for class-based layouts
+            $this->registerLayout(new LazyLayout($layout));
+
+            return $this;
         }
 
         if (! ($layout instanceof LayoutInterface)) {
@@ -478,13 +483,18 @@ class Flexible extends Field
      */
     protected function newGroup($layout, $key)
     {
-        $layout = $this->layouts->find($layout);
+        $found = $this->layouts->find($layout);
 
-        if (! $layout instanceof Layout) {
+        // If it's a LazyLayout, get the real instance for data hydration
+        if ($found instanceof LazyLayout) {
+            $found = $found->getInstance();
+        }
+
+        if (! $found instanceof Layout) {
             return null;
         }
 
-        return $layout->duplicate($key);
+        return $found->duplicate($key);
     }
 
     /**

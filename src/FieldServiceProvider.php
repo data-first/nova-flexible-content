@@ -2,6 +2,7 @@
 
 namespace Whitecube\NovaFlexibleContent;
 
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Nova\Events\ServingNova;
 use Laravel\Nova\Nova;
@@ -9,6 +10,7 @@ use Whitecube\NovaFlexibleContent\Commands\CreateCast;
 use Whitecube\NovaFlexibleContent\Commands\CreateLayout;
 use Whitecube\NovaFlexibleContent\Commands\CreatePreset;
 use Whitecube\NovaFlexibleContent\Commands\CreateResolver;
+use Whitecube\NovaFlexibleContent\Http\Controllers\LayoutFieldsController;
 use Whitecube\NovaFlexibleContent\Http\Middleware\InterceptFlexibleAttributes;
 
 class FieldServiceProvider extends ServiceProvider
@@ -21,6 +23,7 @@ class FieldServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->addMiddleware();
+        $this->registerRoutes();
 
         Nova::serving(function (ServingNova $event) {
             // Nova 5 uses mix(), Nova 4 uses script()/style()
@@ -30,6 +33,22 @@ class FieldServiceProvider extends ServiceProvider
                 Nova::script('nova-flexible-content', __DIR__.'/../dist/js/field.js');
                 Nova::style('nova-flexible-content', __DIR__.'/../dist/css/field.css');
             }
+        });
+    }
+
+    /**
+     * Register routes for lazy layout field loading.
+     *
+     * @return void
+     */
+    protected function registerRoutes()
+    {
+        Route::group([
+            'prefix' => 'nova-vendor/nova-flexible-content',
+            'middleware' => config('nova.middleware', []),
+        ], function () {
+            Route::get('/layout-fields', [LayoutFieldsController::class, 'show'])
+                ->name('nova-flexible-content.layout-fields');
         });
     }
 

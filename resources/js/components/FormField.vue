@@ -107,6 +107,8 @@ export default {
       groups: {},
       files: {},
       sortableInstance: null,
+      layoutFieldsCache: {},
+      loadingLayout: null,
     };
   },
 
@@ -120,11 +122,11 @@ export default {
     /*
      * Set the initial, internal value for the field.
      */
-    setInitialValue() {
+    async setInitialValue() {
       this.value = this.currentField.value || [];
       this.files = {};
 
-      this.populateGroups();
+      await this.populateGroups();
       this.$nextTick(this.initSortable.bind(this));
     },
 
@@ -199,12 +201,12 @@ export default {
     /**
      * Set the displayed layouts from the field's current value
      */
-    populateGroups() {
+    async populateGroups() {
       this.order.splice(0, this.order.length);
       this.groups = {};
 
       for (var i = 0; i < this.value.length; i++) {
-        this.addGroup(
+        await this.addGroup(
           this.getLayout(this.value[i].layout),
           this.value[i].attributes,
           this.value[i].key,
@@ -222,10 +224,50 @@ export default {
     },
 
     /**
+     * Fetch layout fields from the server for lazy layouts
+     */
+    async fetchLayoutFields(layout) {
+      if (!layout.lazy || layout.fields) {
+        return layout;
+      }
+
+      const cacheKey = layout.layoutClass;
+
+      // Check cache first
+      if (this.layoutFieldsCache[cacheKey]) {
+        return { ...layout, fields: this.layoutFieldsCache[cacheKey] };
+      }
+
+      // Fetch from server
+      try {
+        const response = await Nova.request().get(
+          '/nova-vendor/nova-flexible-content/layout-fields',
+          { params: { layout: layout.layoutClass } }
+        );
+
+        this.layoutFieldsCache[cacheKey] = response.data.fields;
+        return { ...layout, fields: response.data.fields };
+      } catch (error) {
+        console.error('Failed to fetch layout fields:', error);
+        Nova.error('Failed to load layout fields');
+        return null;
+      }
+    },
+
+    /**
      * Append the given layout to flexible content's list
      */
-    addGroup(layout, attributes, key, collapsed) {
+    async addGroup(layout, attributes, key, collapsed) {
       if (!layout) return;
+
+      // Fetch fields if this is a lazy layout and we don't have attributes (new group)
+      if (layout.lazy && !layout.fields && !attributes) {
+        this.loadingLayout = layout.name;
+        layout = await this.fetchLayoutFields(layout);
+        this.loadingLayout = null;
+
+        if (!layout) return;
+      }
 
       collapsed = collapsed || false;
 
