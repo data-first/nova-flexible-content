@@ -3,6 +3,7 @@
 namespace Whitecube\NovaFlexibleContent\Layouts;
 
 use JsonSerializable;
+use Laravel\Nova\Http\Requests\NovaRequest;
 use ReflectionClass;
 use Whitecube\NovaFlexibleContent\Http\ScopedRequest;
 
@@ -230,6 +231,20 @@ class LazyLayout implements LayoutInterface, JsonSerializable
     public function duplicateAndHydrate($key, array $attributes = [])
     {
         return $this->getInstance()->duplicateAndHydrate($key, $attributes);
+    }
+
+    /**
+     * Filter the layout's fields for detail view
+     *
+     * @param \Laravel\Nova\Http\Requests\NovaRequest $request
+     * @param mixed $resource
+     * @return $this
+     */
+    public function filterForDetail($request, $resource)
+    {
+        $this->getInstance()->filterForDetail($request, $resource);
+
+        return $this;
     }
 
     /**
